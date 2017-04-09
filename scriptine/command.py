@@ -204,7 +204,7 @@ def cmd(function, args=None):
 
 def print_help(namespace, command_suffix):
     group_commands = defaultdict(list)
-    for func_name, func in namespace.iteritems():
+    for func_name, func in namespace.items():
         if func_name.endswith(command_suffix):
             func = namespace[func_name]
             group = getattr(func, 'group', None)
@@ -212,7 +212,10 @@ def print_help(namespace, command_suffix):
             group_commands[group].append((command_name, func.__doc__))
     
     if not group_commands:
-        print >>sys.stderr, 'no commands found in', sys.argv[0]
+        try:
+            print >>sys.stderr, 'no commands found in', sys.argv[0]
+        except TypeError:
+            print('no commands found in', sys.argv[0], file=sys.stderr)
         return
     
     usage = 'usage: %prog command [options]'
@@ -222,21 +225,30 @@ def print_help(namespace, command_suffix):
     default_commands = group_commands.pop(None, None)
     if default_commands:
         print_commands(None, default_commands)
-    for group_name, commands in group_commands.iteritems():
+    for group_name, commands in group_commands.items():
         print_commands(group_name, commands)
 
 def print_commands(group_name, commands):
-    if group_name:
-        print >>sys.stderr, '\n%s commands:' % group_name.title()
-    else:
-        print >>sys.stderr, '\nCommands:'
+    try:
+        if group_name:
+            print >>sys.stderr, '\n%s commands:' % group_name.title()
+        else:
+            print >>sys.stderr, '\nCommands:'
+    except TypeError:
+        if group_name:
+            print('\n%s commands:' % group_name.title(), file=sys.stderr)
+        else:
+            print('\nCommands:', file=sys.stderr)
     cmd_len = max(len(cmd) for cmd, _ in commands)
     for cmd, doc in commands:
         if doc is not None:
             doc = doc.strip().split('\n')[0]
         else:
             doc = ''
-        print >>sys.stderr, ('  %-' + str(cmd_len) + 's  %s') % (cmd, doc)
+        try:
+            print >>sys.stderr, ('  %-' + str(cmd_len) + 's  %s') % (cmd, doc)
+        except TypeError:
+            print(('  %-' + str(cmd_len) + 's  %s') % (cmd, doc), file=sys.stderr)
 
 def parse_rst_params(doc):
     """
