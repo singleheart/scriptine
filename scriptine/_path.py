@@ -5,7 +5,7 @@ Example:
 from path import path
 d = path('/home/guido/bin')
 for f in d.files('*.py'):
-    f.chmod(0755)
+    f.chmod(0o755)
 
 This module requires Python 2.2 or later.
 
@@ -52,6 +52,12 @@ else:
     except ImportError:
         pwd = None
 
+# Python 3 support
+try:
+    unicode
+except NameError:
+    unicode = str
+
 # Pre-2.3 support.  Are unicode filenames supported?
 _base = str
 _getcwd = os.getcwd
@@ -66,7 +72,7 @@ except AttributeError:
 try:
     True, False
 except NameError:
-    True, False = 1, 0
+    exec("True, False = 1, 0")  # SyntaxError in python3
 
 # Pre-2.3 workaround for basestring.
 try:
@@ -76,7 +82,10 @@ except NameError:
 
 # Universal newline support
 _textmode = 'r'
-if hasattr(file, 'newlines'):
+try:
+    if hasattr(file, 'newlines'):
+        _textmode = 'U'
+except NameError:  # file not supported in python3, I assume _textmode='U' for these cases
     _textmode = 'U'
 
 
@@ -528,7 +537,7 @@ class path(_base):
 
     def open(self, mode='r'):
         """ Open this file.  Return a file object. """
-        return file(self, mode)
+        return open(self, mode)
 
     def bytes(self):
         """ Open this file, read all bytes, return them as a string. """
@@ -818,7 +827,7 @@ class path(_base):
     ctime = os.path.getctime
 
     def newer(self, other):
-        return self.mtime > other.mtime
+        return self.mtime() > other.mtime()  # this was a bug
 
     size = os.path.getsize
 
@@ -903,15 +912,15 @@ class path(_base):
     # --- Create/delete operations on directories
 
     @dry_guard
-    def mkdir(self, mode=0777):
+    def mkdir(self, mode=0o777):
         os.mkdir(self, mode)
 
     @dry_guard
-    def makedirs(self, mode=0777):
+    def makedirs(self, mode=0o777):
         os.makedirs(self, mode)
 
     @dry_guard
-    def ensure_dir(self, mode=0777):
+    def ensure_dir(self, mode=0o777):
         """
         Make sure the directory exists, create if necessary.
         """
@@ -934,7 +943,7 @@ class path(_base):
         """ Set the access/modified times of this file to the current time.
         Create the file if it does not exist.
         """
-        fd = os.open(self, os.O_WRONLY | os.O_CREAT, 0666)
+        fd = os.open(self, os.O_WRONLY | os.O_CREAT, 0o666)
         os.close(fd)
         os.utime(self, None)
 
@@ -996,7 +1005,7 @@ class path(_base):
     # --- Convenience for scriptine
 
     @dry_guard
-    def install(self, to, chmod=0644):
+    def install(self, to, chmod=0o644):
         """
         Copy data and set mode to 'chmod'.
         """

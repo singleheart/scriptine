@@ -29,26 +29,28 @@ if sys.platform in ('cygwin', 'win32'):
 else:
     is_windows = False
 
+
 def p(**choices):
     """ Choose a value from several possible values, based on os.name """
     return choices[os.name]
+
 
 class BasicTestCase(unittest.TestCase):
     def testRelpath(self):
         root = path(p(nt='C:\\',
                       posix='/'))
         foo = root / 'foo'
-        quux =        foo / 'quux'
-        bar =         foo / 'bar'
-        boz =                bar / 'Baz' / 'Boz'
+        quux = foo / 'quux'
+        bar = foo / 'bar'
+        boz = bar / 'Baz' / 'Boz'
         up = path(os.pardir)
 
         # basics
-        self.assertEqual(root.relpathto(boz), path('foo')/'bar'/'Baz'/'Boz')
-        self.assertEqual(bar.relpathto(boz), path('Baz')/'Boz')
-        self.assertEqual(quux.relpathto(boz), up/'bar'/'Baz'/'Boz')
-        self.assertEqual(boz.relpathto(quux), up/up/up/'quux')
-        self.assertEqual(boz.relpathto(bar), up/up)
+        self.assertEqual(root.relpathto(boz), path('foo') / 'bar' / 'Baz' / 'Boz')
+        self.assertEqual(bar.relpathto(boz), path('Baz') / 'Boz')
+        self.assertEqual(quux.relpathto(boz), up / 'bar' / 'Baz' / 'Boz')
+        self.assertEqual(boz.relpathto(quux), up / up / up / 'quux')
+        self.assertEqual(boz.relpathto(bar), up / up)
 
         # x.relpathto(x) == curdir
         self.assertEqual(root.relpathto(root), os.curdir)
@@ -85,7 +87,7 @@ class BasicTestCase(unittest.TestCase):
         # Test p1/p1.
         p1 = path("foo")
         p2 = path("bar")
-        self.assertEqual(p1/p2, p(nt='foo\\bar', posix='foo/bar'))
+        self.assertEqual(p1 / p2, p(nt='foo\\bar', posix='foo/bar'))
 
     def testProperties(self):
         # Create sample path object.
@@ -123,6 +125,7 @@ class BasicTestCase(unittest.TestCase):
             self.assert_(p.uncshare == r'\\python1\share1')
             self.assert_(p.splitunc() == os.path.splitunc(str(p)))
 
+
 class TempDirTestCase(unittest.TestCase):
     def setUp(self):
         # Create a temporary directory.
@@ -142,11 +145,11 @@ class TempDirTestCase(unittest.TestCase):
         #
         # atime isn't tested because on Windows the resolution of atime
         # is something like 24 hours.
-        
+
         sleep_time = 2.0
         if is_windows:
             sleep_time = 5.0
-        
+
         d = path(self.tempdir)
         f = d / 'test.txt'
         t0 = time.time() - sleep_time / 2
@@ -162,12 +165,12 @@ class TempDirTestCase(unittest.TestCase):
                 self.assert_(t0 <= ct <= t1)
 
             time.sleep(sleep_time)
-            fobj = file(f, 'ab')
-            fobj.write('some bytes')
+            fobj = open(f, 'ab')
+            fobj.write(b'some bytes')
             fobj.close()
 
             time.sleep(sleep_time)
-            
+
             f_new = d / 'test_new.txt'
             f_new.touch()
             self.assert_(f_new.newer(f))
@@ -197,7 +200,7 @@ class TempDirTestCase(unittest.TestCase):
     def testListing(self):
         d = path(self.tempdir)
         self.assertEqual(d.listdir(), [])
-        
+
         f = 'testfile.txt'
         af = d / f
         self.assertEqual(af, os.path.join(d, f))
@@ -221,7 +224,7 @@ class TempDirTestCase(unittest.TestCase):
         # Try a test with 20 files
         files = [d / ('%d.txt' % i) for i in range(20)]
         for f in files:
-            fobj = file(f, 'w')
+            fobj = open(f, 'w')
             fobj.write('some text\n')
             fobj.close()
         try:
@@ -245,7 +248,7 @@ class TempDirTestCase(unittest.TestCase):
         tempf.touch()
         try:
             foo = d / 'foo'
-            boz =      foo / 'bar' / 'baz' / 'boz'
+            boz = foo / 'bar' / 'baz' / 'boz'
             boz.makedirs()
             try:
                 self.assert_(boz.isdir())
@@ -254,8 +257,8 @@ class TempDirTestCase(unittest.TestCase):
             self.failIf(foo.exists())
             self.assert_(d.exists())
 
-            foo.mkdir(0750)
-            boz.makedirs(0700)
+            foo.mkdir(0o750)
+            boz.makedirs(0o700)
             try:
                 self.assert_(boz.isdir())
             finally:
@@ -307,16 +310,15 @@ class TempDirTestCase(unittest.TestCase):
         testFile.copy(testA)
         self.assert_(testCopy2.isfile())
         self.assert_(testFile.bytes() == testCopy2.bytes())
-        
+
         # Test install file
-        testFile.install(testInstall, chmod=0740)
+        testFile.install(testInstall, chmod=0o740)
         stats = stat.S_IMODE(testInstall.stat().st_mode)
-        
-        self.assert_(stats == 
-            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP)
+
+        self.assert_(stats ==
+                     stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP)
         testInstall.unlink()
-        
-        
+
         # Make a link for the next test to use.
         if hasattr(os, 'symlink'):
             testFile.symlink(testLink)
@@ -363,25 +365,25 @@ class TempDirTestCase(unittest.TestCase):
 
     def testPatterns(self):
         d = path(self.tempdir)
-        names = [ 'x.tmp', 'x.xtmp', 'x2g', 'x22', 'x.txt' ]
-        dirs = [d, d/'xdir', d/'xdir.tmp', d/'xdir.tmp'/'xsubdir']
+        names = ['x.tmp', 'x.xtmp', 'x2g', 'x22', 'x.txt']
+        dirs = [d, d / 'xdir', d / 'xdir.tmp', d / 'xdir.tmp' / 'xsubdir']
 
         for e in dirs:
             if not e.isdir():  e.makedirs()
             for name in names:
-                (e/name).touch()
-        self.assertList(d.listdir('*.tmp'), [d/'x.tmp', d/'xdir.tmp'])
-        self.assertList(d.files('*.tmp'), [d/'x.tmp'])
-        self.assertList(d.dirs('*.tmp'), [d/'xdir.tmp'])
-        self.assertList(d.walk(), [e for e in dirs if e != d] + [e/n for e in dirs for n in names])
+                (e / name).touch()
+        self.assertList(d.listdir('*.tmp'), [d / 'x.tmp', d / 'xdir.tmp'])
+        self.assertList(d.files('*.tmp'), [d / 'x.tmp'])
+        self.assertList(d.dirs('*.tmp'), [d / 'xdir.tmp'])
+        self.assertList(d.walk(), [e for e in dirs if e != d] + [e / n for e in dirs for n in names])
         self.assertList(d.walk('*.tmp'),
-                        [e/'x.tmp' for e in dirs] + [d/'xdir.tmp'])
-        self.assertList(d.walkfiles('*.tmp'), [e/'x.tmp' for e in dirs])
-        self.assertList(d.walkdirs('*.tmp'), [d/'xdir.tmp'])
+                        [e / 'x.tmp' for e in dirs] + [d / 'xdir.tmp'])
+        self.assertList(d.walkfiles('*.tmp'), [e / 'x.tmp' for e in dirs])
+        self.assertList(d.walkdirs('*.tmp'), [d / 'xdir.tmp'])
 
     def testUnicode(self):
         d = path(self.tempdir)
-        p = d/'unicode.txt'
+        p = d / 'unicode.txt'
 
         def test(enc):
             """ Test that path works with the specified encoding,
@@ -483,7 +485,6 @@ class TempDirTestCase(unittest.TestCase):
             testLinesep(u'\r\n')
             testLinesep(u'\x0d\x85')
 
-
             # Again, but with linesep=None.
             p.write_lines(givenLines, enc, linesep=None)
             p.write_lines(givenLines, enc, linesep=None, append=True)
@@ -501,8 +502,9 @@ class TempDirTestCase(unittest.TestCase):
         test('UTF-16LE')
         test('UTF-16')
 
+
 if __name__ == '__main__':
     if __version__ != path_version:
-        print ("Version mismatch:  test_path.py version %s, path version %s" %
-               (__version__, path_version))
+        print("Version mismatch:  test_path.py version %s, path version %s" %
+              (__version__, path_version))
     unittest.main()

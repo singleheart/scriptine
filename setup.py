@@ -23,6 +23,9 @@ options = scriptine.misc.Options(
       'Programming Language :: Python',
       ],
     packages = ['scriptine'],
+    install_requires=[
+        "wrapt"
+    ],
     zip_safe = False,
     cmdclass = {
         'zipdist': zipdist,
