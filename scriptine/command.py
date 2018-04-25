@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 import types
 import inspect
@@ -212,11 +214,7 @@ def print_help(namespace, command_suffix):
             group_commands[group].append((command_name, func.__doc__))
     
     if not group_commands:
-        try:
-            print >>sys.stderr, 'no commands found in', sys.argv[0]
-        except TypeError:
-            print('no commands found in', sys.argv[0], file=sys.stderr)
-        return
+        print('no commands found in', sys.argv[0], file=sys.stderr)
     
     usage = 'usage: %prog command [options]'
     parser = optparse.OptionParser(usage)
@@ -229,26 +227,17 @@ def print_help(namespace, command_suffix):
         print_commands(group_name, commands)
 
 def print_commands(group_name, commands):
-    try:
-        if group_name:
-            print >>sys.stderr, '\n%s commands:' % group_name.title()
-        else:
-            print >>sys.stderr, '\nCommands:'
-    except TypeError:
-        if group_name:
-            print('\n%s commands:' % group_name.title(), file=sys.stderr)
-        else:
-            print('\nCommands:', file=sys.stderr)
+    if group_name:
+        print('\n%s commands:' % group_name.title(), file=sys.stderr)
+    else:
+        print('\nCommands:', file=sys.stderr)
     cmd_len = max(len(cmd) for cmd, _ in commands)
     for cmd, doc in commands:
         if doc is not None:
             doc = doc.strip().split('\n')[0]
         else:
             doc = ''
-        try:
-            print >>sys.stderr, ('  %-' + str(cmd_len) + 's  %s') % (cmd, doc)
-        except TypeError:
-            print(('  %-' + str(cmd_len) + 's  %s') % (cmd, doc), file=sys.stderr)
+        print(('  %-' + str(cmd_len) + 's  %s') % (cmd, doc), file=sys.stderr)
 
 def parse_rst_params(doc):
     """
